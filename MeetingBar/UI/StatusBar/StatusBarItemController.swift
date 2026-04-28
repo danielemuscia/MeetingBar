@@ -30,7 +30,12 @@ final class StatusBarItemController {
     var statusItem: NSStatusItem!
     var statusItemMenu: NSMenu!
 
-    var events: [MBEvent] = []
+    // Custom SwiftUI-based menu panel (new design)
+    var menuPanel: MenuPanelController!
+
+    var events: [MBEvent] = [] {
+        didSet { menuPanel?.viewModel.events = events }
+    }
 
     let installationDate = getInstallationDate()
 
@@ -44,6 +49,9 @@ final class StatusBarItemController {
         )
 
         statusItemMenu = NSMenu(title: "MeetingBar in Status Bar Menu")
+
+        // Build the custom SwiftUI panel
+        menuPanel = MenuPanelController()
 
         statusItem.button?.target = self
         statusItem.button?.action = #selector(statusMenuBarAction)
@@ -147,22 +155,27 @@ final class StatusBarItemController {
         let event = NSApp.currentEvent
 
         if event?.type == .rightMouseUp {
-            // Right button click
+            // Right-click: join next meeting (same as before)
             joinNextMeeting()
         } else if event == nil || event?.type == .leftMouseDown || event?.type == .leftMouseUp {
-            // show the menu as normal
             openMenu()
         }
     }
 
     func openMenu() {
-        statusItem.menu = statusItemMenu
-        statusItem.button?.performClick(nil) // ...and click
-        statusItem.menu = nil
+        guard let button = statusItem.button else { return }
+        menuPanel.toggle(relativeTo: button)
     }
 
     func setAppDelegate(appdelegate: AppDelegate) {
         self.appdelegate = appdelegate
+
+        // Wire panel action callbacks now that we have the delegate
+        menuPanel.viewModel.onJoinNext = { [weak self] in self?.joinNextMeeting() }
+        menuPanel.viewModel.onCreateMeeting = { createMeeting() }
+        menuPanel.viewModel.onOpenPreferences = { [weak appdelegate] in
+            Task { @MainActor in appdelegate?.openPreferencesWindow(nil) }
+        }
     }
 
     func updateTitle() {
