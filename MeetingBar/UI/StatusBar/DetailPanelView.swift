@@ -180,26 +180,34 @@ struct DetailPanelView: View {
     // MARK: - Where
 
     private var whereRow: some View {
-        HStack(alignment: .center, spacing: 10) {
-            if event.meetingLink != nil {
-                ServiceMarkView(service: event.meetingLink?.service, size: 32)
+        let hasLocation = !(event.location ?? "").isEmpty
+        let link = event.meetingLink
+
+        // If there's no calendar location, fall back to the service name as label.
+        let locationLabel: String = hasLocation
+            ? event.location!
+            : (link?.service?.localizedValue ?? "Online meeting")
+
+        return HStack(alignment: .center, spacing: 10) {
+            if link != nil {
+                ServiceMarkView(service: link?.service, size: 32)
             }
             VStack(alignment: .leading, spacing: 2) {
-                if let loc = event.location, !loc.isEmpty {
-                    Text(loc)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(Color.mbText1(scheme))
-                        .lineLimit(1)
-                }
-                if let link = event.meetingLink {
+                Text(locationLabel)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(Color.mbText1(scheme))
+                    .lineLimit(1)
+
+                if let link {
                     Link(link.url.absoluteString, destination: link.url)
-                        .font(.system(size: 12.5))
-                        .foregroundColor(Color.mbText1(scheme))
+                        .font(.system(size: 12))
+                        .foregroundColor(Color.mbText2(scheme))
                         .lineLimit(1)
+                        .truncationMode(.middle)
                 }
             }
             Spacer(minLength: 0)
-            if let link = event.meetingLink {
+            if let link {
                 Button("Copy") {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(link.url.absoluteString, forType: .string)
