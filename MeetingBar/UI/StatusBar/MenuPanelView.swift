@@ -39,5 +39,8 @@ struct MenuPanelView: View {
         }
         .frame(width: 380, height: 640)
         .animation(.easeOut(duration: 0.22), value: viewModel.selectedEventId != nil)
+        // Reset the detail selection whenever the panel is dismissed so the next
+        // open always starts at the main menu view.
+        .onDisappear { viewModel.selectedEventId = nil }
     }
 }
