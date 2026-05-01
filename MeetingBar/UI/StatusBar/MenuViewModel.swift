@@ -2,10 +2,20 @@
 import SwiftUI
 import Defaults
 
+// Status bar label state — computed by StatusBarItemController.updateTitle()
+// and rendered by StatusBarLabelView in the MenuBarExtra label closure.
+struct StatusBarLabel {
+    var icon: NSImage? = nil
+    var title: String = ""
+    var time: String = ""
+    var timeUnderTitle: Bool = false
+}
+
 @MainActor
 final class MenuViewModel: ObservableObject {
     @Published var events: [MBEvent] = []
     @Published var selectedEventId: String? = nil
+    @Published var statusBarLabel = StatusBarLabel()
 
     // Density and notes-preview come from Defaults; observe them for live updates.
     var density: DensityPreset {
@@ -21,6 +31,7 @@ final class MenuViewModel: ObservableObject {
     var onJoinNext: (() -> Void)?
     var onCreateMeeting: (() -> Void)?
     var onOpenPreferences: (() -> Void)?
+    var onReload: (() -> Void)?
 
     var selectedEvent: MBEvent? {
         guard let id = selectedEventId else { return nil }
@@ -30,6 +41,7 @@ final class MenuViewModel: ObservableObject {
     func joinNextMeeting() { onJoinNext?() }
     func createMeeting() { onCreateMeeting?() }
     func openPreferences() { onOpenPreferences?() }
+    func reload() { onReload?() }
 }
 
 // MARK: - Defaults keys for new preferences

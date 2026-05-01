@@ -1,6 +1,12 @@
 // MenuComponents.swift — Shared UI primitives: Avatar, ServiceMark, Separator, SectionHeader, ActionRow
 import SwiftUI
 
+struct HideScrollBackground: ViewModifier {
+    func body(content: Content) -> some View {
+        content.scrollContentBackground(.hidden)
+    }
+}
+
 // MARK: - Avatar
 
 private let kAvatarHues: [Double] = [12, 35, 145, 200, 235, 280, 320]
@@ -75,7 +81,30 @@ struct ServiceMarkView: View {
     let service: MeetingServices?
     var size: CGFloat = 22
 
-    private var cfg: (bg: Color, letter: String) {
+    private var iconAssetName: String? {
+        switch service {
+        case .meet, .meetStream:                    return "google_meet_icon"
+        case .hangouts:                             return "google_hangouts_icon"
+        case .zoom, .zoom_native, .zoomgov:         return "zoom_icon"
+        case .teams:                                return "ms_teams_icon"
+        case .webex:                                return "webex_icon"
+        case .jitsi:                                return "jitsi_icon"
+        case .slack:                                return "slack_icon"
+        case .discord:                              return "discord_icon"
+        case .facetime, .facetimeaudio:             return "facetime_icon"
+        case .skype:                                return "skype_icon"
+        case .skype4biz, .skype4biz_selfhosted:     return "skype_business_icon"
+        case .bluejeans:                            return "bluejeans_icon"
+        case .whereby:                              return "whereby_icon"
+        case .meetecho:                             return "meetecho_icon"
+        case .chime:                                return "amazon_chime_icon"
+        case .ringcentral:                          return "ringcentral_icon"
+        case .gotomeeting:                          return "gotomeeting_icon"
+        default:                                    return nil
+        }
+    }
+
+    private var fallbackCfg: (bg: Color, letter: String) {
         switch service {
         case .zoom, .zoom_native, .zoomgov:
             return (Color(red: 0.176, green: 0.549, blue: 1.0), "Z")
@@ -98,15 +127,28 @@ struct ServiceMarkView: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: size * 0.27)
-                .fill(cfg.bg)
-                .overlay(
-                    RoundedRectangle(cornerRadius: size * 0.27)
-                        .stroke(.white.opacity(0.12), lineWidth: 0.5)
-                )
-            Text(cfg.letter)
-                .font(.system(size: size * 0.5, weight: .bold))
-                .foregroundColor(.white)
+            if let name = iconAssetName, let nsImg = NSImage(named: name) {
+                RoundedRectangle(cornerRadius: size * 0.27)
+                    .fill(.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: size * 0.27)
+                            .stroke(Color.black.opacity(0.08), lineWidth: 0.5)
+                    )
+                Image(nsImage: nsImg)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .padding(size * 0.17)
+            } else {
+                RoundedRectangle(cornerRadius: size * 0.27)
+                    .fill(fallbackCfg.bg)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: size * 0.27)
+                            .stroke(.white.opacity(0.12), lineWidth: 0.5)
+                    )
+                Text(fallbackCfg.letter)
+                    .font(.system(size: size * 0.5, weight: .bold))
+                    .foregroundColor(.white)
+            }
         }
         .frame(width: size, height: size)
         .shadow(color: .black.opacity(0.18), radius: 1.5, x: 0, y: 1)
@@ -153,6 +195,31 @@ struct SectionHeaderView: View {
     }
 }
 
+// MARK: - Menu item button style
+// Matches native macOS menu/Control-Center row interaction:
+//   normal → transparent, hovered → subtle fill, pressed → accent tint.
+
+struct MenuItemStyle: ButtonStyle {
+    var isHovered: Bool = false
+    var cornerRadius: CGFloat = 7
+    @Environment(\.colorScheme) private var scheme
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(background(pressed: configuration.isPressed))
+            )
+            .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
+    }
+
+    private func background(pressed: Bool) -> Color {
+        if pressed   { return Color.accentColor.opacity(scheme == .dark ? 0.35 : 0.18) }
+        if isHovered { return Color.mbHover(scheme) }
+        return .clear
+    }
+}
+
 // MARK: - Action row
 
 struct ActionRowView: View {
@@ -166,31 +233,104 @@ struct ActionRowView: View {
     @State private var hovered = false
 
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 13, weight: .regular))
-                .foregroundColor(Color.mbText2(scheme))
-                .frame(width: 16)
-            Text(label)
-                .font(.system(size: 13))
-                .foregroundColor(danger ? Color.mbDanger : Color.mbText1(scheme))
-            Spacer()
-            if let kbd {
-                Text(kbd)
-                    .font(.system(size: 11.5))
-                    .foregroundColor(Color.mbText3(scheme))
+        Button { action?() } label: {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundColor(Color.mbText2(scheme))
+                    .frame(width: 16)
+                Text(label)
+                    .font(.system(size: 13))
+                    .foregroundColor(danger ? Color.mbDanger : Color.mbText1(scheme))
+                Spacer()
+                if let kbd {
+                    Text(kbd)
+                        .font(.system(size: 11.5))
+                        .foregroundColor(Color.mbText3(scheme))
+                }
             }
+            .padding(.vertical, 7)
+            .padding(.horizontal, 10)
+            .padding(.horizontal, 6)
         }
-        .padding(.vertical, 7)
-        .padding(.horizontal, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 7)
-                .fill(hovered ? Color.mbHover(scheme) : .clear)
-        )
-        .padding(.horizontal, 6)
+        .buttonStyle(MenuItemStyle(isHovered: hovered))
         .contentShape(Rectangle())
         .onHover { hovered = $0 }
-        .onTapGesture { action?() }
+    }
+}
+
+// MARK: - Empty state
+
+struct EmptyStateView: View {
+    enum Kind {
+        case noCalendarConnected
+        case allClear
+    }
+
+    let kind: Kind
+    var primaryAction: (label: String, action: () -> Void)? = nil
+
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        switch kind {
+        case .allClear:
+            allClearBody
+        case .noCalendarConnected:
+            noCalendarBody
+        }
+    }
+
+    private var allClearBody: some View {
+        VStack(spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(Color.secondary.opacity(scheme == .dark ? 0.18 : 0.12))
+                    .frame(width: 64, height: 64)
+                Image(systemName: "checkmark")
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundColor(Color.secondary.opacity(0.6))
+            }
+            VStack(spacing: 5) {
+                Text("All done for today")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(Color.mbText1(scheme))
+                Text("No more meetings on your calendar.")
+                    .font(.system(size: 12.5))
+                    .foregroundColor(Color.mbText2(scheme))
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .padding(.vertical, 36)
+        .padding(.horizontal, 20)
+        .frame(maxWidth: .infinity)
+    }
+
+    private var noCalendarBody: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "calendar.badge.exclamationmark")
+                .font(.system(size: 28, weight: .light))
+                .foregroundColor(Color.mbText3(scheme))
+            VStack(spacing: 3) {
+                Text("No calendar connected")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(Color.mbText1(scheme))
+                Text("Connect a calendar to see your meetings here.")
+                    .font(.system(size: 12))
+                    .foregroundColor(Color.mbText2(scheme))
+                    .multilineTextAlignment(.center)
+            }
+            if let primaryAction {
+                Button(primaryAction.label, action: primaryAction.action)
+                    .buttonStyle(.plain)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.accentColor)
+                    .padding(.top, 2)
+            }
+        }
+        .padding(.vertical, 28)
+        .padding(.horizontal, 20)
+        .frame(maxWidth: .infinity)
     }
 }
 

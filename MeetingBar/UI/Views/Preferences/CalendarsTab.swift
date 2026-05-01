@@ -20,16 +20,24 @@ struct CalendarsTab: View {
                 ProviderPicker(eventManager: eventManager)
             }
             .padding(.bottom, 5)
-            Label("preferences_calendars_select_calendars_title".loco(), systemImage: "calendar").padding(5)
+            HStack {
+                Label("preferences_calendars_select_calendars_title".loco(), systemImage: "calendar")
+                    .padding(5)
+                Spacer()
+                Button {
+                    Task { try await eventManager.refreshSources() }
+                } label: {
+                    Label("Reload", systemImage: "arrow.clockwise")
+                        .font(.system(size: 12))
+                }
+                .buttonStyle(.borderless)
+                .padding(.trailing, 5)
+            }
             List {
                 if eventManager.calendars.isEmpty {
                     if Defaults[.eventStoreProvider] == .macOSEventKit {
                         AccessDeniedBanner()
                     }
-                    Button("Refresh") {
-                        Task { try await eventManager.refreshSources() }
-                    }
-
                 } else {
                     CalendarSectionsView(calendars: eventManager.calendars)
                 }

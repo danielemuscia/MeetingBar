@@ -13,8 +13,11 @@ import SwiftUI
 import UserNotifications
 
 @MainActor
-@main
 class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotificationCenterDelegate {
+    // menuModel is created eagerly so MeetingBarApp can reference it in its body
+    // before applicationDidFinishLaunching runs.
+    var menuModel = MenuViewModel()
+
     var statusBarItem: StatusBarItemController!
     var eventManager: EventManager!
 
@@ -41,7 +44,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
             Defaults[.appVersion] = appVersion
         }
 
-        statusBarItem = StatusBarItemController()
+        statusBarItem = StatusBarItemController(menuModel: menuModel)
 
         NSAppleEventManager.shared().setEventHandler(
             self,
@@ -73,12 +76,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
             .receive(on: DispatchQueue.main) // ensure UI work on main thread
             .sink { [weak self] events in
                 guard let self = self else { return }
-                // 1) update your model
                 self.statusBarItem.events = events
-                // 2) redraw
                 self.statusBarItem.updateTitle()
-                self.statusBarItem.updateMenu()
-                // 3) schedule next notification
+                // schedule next notification
                 if let next = events.nextEvent() {
                     Task { await scheduleEventNotification(next) }
                 }
@@ -130,7 +130,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
                 // Once we hit hh:mm:00, redraw
                 await MainActor.run {
                     self.statusBarItem.updateTitle()
-                    self.statusBarItem.updateMenu()
                 }
             }
         }
@@ -307,7 +306,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency UNUserNotifi
                 NSApplication.shared.terminate(self)
             } else if windowTitle == WindowTitles.changelog {
                 Defaults[.lastRevisedVersionInChangelog] = Defaults[.appVersion]
-                statusBarItem.updateMenu()
             }
         }
     }

@@ -1,5 +1,7 @@
-// EventRowView.swift — Individual event row in the menu list
+// EventRowView.swift
+// NO animations. Hover is a plain fill swap, no withAnimation.
 import SwiftUI
+import Defaults
 
 struct EventRowView: View {
     let event: MBEvent
@@ -11,28 +13,21 @@ struct EventRowView: View {
     @Environment(\.colorScheme) private var scheme
     @State private var hovered = false
 
-    private var isPast: Bool { event.endDate < Date() }
-    private var isDeclined: Bool {
-        event.participationStatus == .declined || event.status == .canceled
-    }
-    private var rowOpacity: Double {
-        if isPast { return 0.42 }
-        if isDeclined { return 0.55 }
-        return 1.0
-    }
+    private var isPast:     Bool   { event.endDate < Date() }
+    private var isDeclined: Bool   { event.participationStatus == .declined || event.status == .canceled }
+    private var rowOpacity: Double { isPast ? 0.42 : isDeclined ? 0.55 : 1.0 }
+    private var calColor:   Color  { Color(nsColor: event.calendar.color) }
 
     private var timeString: String {
         let f = DateFormatter()
-        f.dateFormat = "HH:mm"
+        f.locale = I18N.instance.locale
+        f.dateFormat = Defaults[.timeFormat] == .am_pm ? "h:mm a" : "HH:mm"
         return f.string(from: event.startDate)
     }
-
-    private var calendarColor: Color { Color(nsColor: event.calendar.color) }
 
     var body: some View {
         Button(action: onSelect) {
             HStack(alignment: .top, spacing: 10) {
-                // Time column
                 Text(timeString)
                     .font(.system(size: 12, weight: .medium).monospacedDigit())
                     .foregroundColor(isPast ? Color.mbText3(scheme) : Color.mbText2(scheme))
@@ -40,37 +35,29 @@ struct EventRowView: View {
                     .frame(width: 42, alignment: .leading)
                     .padding(.top, 1)
 
-                // Calendar color dot
                 Circle()
-                    .fill(calendarColor)
+                    .fill(calColor)
                     .frame(width: 8, height: 8)
-                    .shadow(color: calendarColor.opacity(isPast ? 0 : 0.28), radius: 2)
                     .padding(.top, 5)
 
-                // Main content
                 VStack(alignment: .leading, spacing: 2) {
                     Text(event.title)
                         .font(.system(size: density.titleFontSize, weight: .medium))
-                        .tracking(-0.2)
                         .foregroundColor(Color.mbText1(scheme))
                         .strikethrough(isDeclined)
                         .lineLimit(1)
 
                     if density != .compact {
                         HStack(spacing: 6) {
-                            if let location = event.location {
+                            if let loc = event.location {
                                 HStack(spacing: 4) {
-                                    Image(systemName: "mappin")
-                                        .font(.system(size: 10))
-                                    Text(location)
+                                    Image(systemName: "mappin").font(.system(size: 10))
+                                    Text(loc)
                                 }
                             }
-                            if event.location != nil {
-                                Text("·").opacity(0.5)
-                            }
+                            if event.location != nil { Text("·").opacity(0.5) }
                             HStack(spacing: 3) {
-                                Image(systemName: "person.2")
-                                    .font(.system(size: 10))
+                                Image(systemName: "person.2").font(.system(size: 10))
                                 Text("\(event.attendees.count)")
                             }
                         }
@@ -89,29 +76,28 @@ struct EventRowView: View {
 
                 Spacer(minLength: 0)
 
-                // Right: avatar stack + service mark
                 HStack(spacing: 8) {
                     if density != .compact {
                         AvatarStackView(people: event.attendees.map(\.name), max: 3, size: 18)
                     }
-                    ServiceMarkView(service: event.meetingLink?.service, size: 20)
+                    if event.meetingLink != nil {
+                        ServiceMarkView(service: event.meetingLink?.service, size: 20)
+                    }
                 }
             }
+            .frame(maxWidth: .infinity)
             .padding(.vertical, density.rowPaddingV)
             .padding(.horizontal, 8)
             .padding(.leading, 2)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(
-                        selected
-                            ? Color.accentColor.opacity(0.22)
-                            : (hovered ? Color.mbHover(scheme) : .clear)
-                    )
+                    .fill(selected ? Color.accentColor.opacity(0.15) : .clear)
             )
             .opacity(rowOpacity)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(MenuItemStyle(isHovered: hovered && !selected, cornerRadius: 8))
         .padding(.horizontal, 6)
+        .contentShape(Rectangle())
         .onHover { hovered = $0 }
     }
 }
