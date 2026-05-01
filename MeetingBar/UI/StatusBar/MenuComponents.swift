@@ -178,15 +178,14 @@ struct SectionHeaderView: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(title.uppercased())
-                .font(.system(size: 11, weight: .semibold))
-                .tracking(0.5)
-                .foregroundColor(Color.mbText3(scheme))
+            Text(title)
+                .font(.system(size: 12.5, weight: .medium))
+                .foregroundColor(Color.mbText2(scheme))
             Spacer()
             if let sub {
                 Text(sub)
-                    .font(.system(size: 11))
-                    .foregroundColor(Color.mbText3(scheme))
+                    .font(.system(size: 12))
+                    .foregroundColor(Color.mbText2(scheme))
             }
         }
         .padding(.horizontal, 14)
@@ -234,11 +233,11 @@ struct ActionRowView: View {
 
     var body: some View {
         Button { action?() } label: {
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundColor(Color.mbText2(scheme))
-                    .frame(width: 16)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color.mbText1(scheme))
+                    .frame(width: 20, alignment: .center)
                 Text(label)
                     .font(.system(size: 13))
                     .foregroundColor(danger ? Color.mbDanger : Color.mbText1(scheme))
@@ -249,11 +248,11 @@ struct ActionRowView: View {
                         .foregroundColor(Color.mbText3(scheme))
                 }
             }
-            .padding(.vertical, 7)
-            .padding(.horizontal, 10)
-            .padding(.horizontal, 6)
+            .padding(.vertical, 9)
+            .padding(.horizontal, 8)
         }
         .buttonStyle(MenuItemStyle(isHovered: hovered))
+        .padding(.horizontal, 6)   // insets the rounded-rect highlight from container edges
         .contentShape(Rectangle())
         .onHover { hovered = $0 }
     }
