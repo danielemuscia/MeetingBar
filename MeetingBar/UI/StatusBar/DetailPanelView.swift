@@ -105,16 +105,19 @@ struct DetailPanelView: View {
     // MARK: - Section wrapper
 
     private func section<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(label.uppercased())
-                .font(.system(size: 10.5, weight: .semibold))
-                .tracking(0.6)
-                .foregroundColor(Color.mbText3(scheme))
+        VStack(alignment: .leading, spacing: 4) {
+            // Native style: normal case, medium weight, secondary gray.
+            // Padding applied to the whole VStack so title left edge = 14 pt =
+            // icon left edge in each row (actionsRow cancels it with −14 pt).
+            Text(label)
+                .font(.system(size: 12.5, weight: .medium))
+                .foregroundColor(Color.mbText2(scheme))
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.top, 12)
+        .padding(.bottom, 8)
         .overlay(
             Rectangle()
                 .fill(Color.mbStrokeSoft(scheme))
@@ -351,10 +354,16 @@ private struct DetailActionRow: View {
                 .foregroundColor(Color.mbText1(scheme))
             Spacer()
         }
+        // Content padding: 14 pt keeps icon aligned with section title.
+        // Background: rounded rect inset 6 pt from each edge — native row style.
         .padding(.vertical, 9)
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity)
-        .background(hovered ? Color.mbHover(scheme) : .clear)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(hovered ? Color.mbHover(scheme) : .clear)
+                .padding(.horizontal, 6)
+        )
         .contentShape(Rectangle())
         .onHover { hovered = $0 }
         .onTapGesture { action() }
