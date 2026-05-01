@@ -1,24 +1,17 @@
 // MenuPanelView.swift
 // Layout contract:
-//   • .frame(height: 640) on the HStack is the ONLY height constraint.
-//   • .frame(width: 380) on the main ScrollView is the ONLY width for that column.
-//   • DetailPanelView sizes itself to width 320 internally.
-//   • NO animations, NO .transition(), NO withAnimation anywhere in this file.
+//   • Window is always 380×640 — it never resizes. No blink from compositor.
+//   • The detail panel slides in as a ZStack overlay — no layout change.
+//   • ONE .animation(value:) on the ZStack drives the transition.
+//   • NO withAnimation at call sites, NO competing animation modifiers.
 import SwiftUI
 
 struct MenuPanelView: View {
     @ObservedObject var viewModel: MenuViewModel
 
     var body: some View {
-        HStack(alignment: .top, spacing: 0) {
-            if let event = viewModel.selectedEvent {
-                DetailPanelView(
-                    event: event,
-                    onClose: { viewModel.selectedEventId = nil }
-                )
-                Divider()
-            }
-
+        ZStack(alignment: .topLeading) {
+            // Main menu — always rendered at full size, never moves.
             ScrollView {
                 MenuDropdownView(
                     events:          viewModel.events,
@@ -34,7 +27,17 @@ struct MenuPanelView: View {
             }
             .frame(width: 380)
             .scrollContentBackground(.hidden)
+
+            // Detail panel — overlays the main menu; slides in/out from the left.
+            if let event = viewModel.selectedEvent {
+                DetailPanelView(
+                    event: event,
+                    onClose: { viewModel.selectedEventId = nil }
+                )
+                .transition(.move(edge: .leading).combined(with: .opacity))
+            }
         }
-        .frame(height: 640)
+        .frame(width: 380, height: 640)
+        .animation(.easeOut(duration: 0.22), value: viewModel.selectedEventId != nil)
     }
 }

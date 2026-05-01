@@ -30,6 +30,14 @@ extension Color {
         scheme == .dark ? .white.opacity(0.07) : .white.opacity(0.70)
     }
 
+    // Solid panel background — used by DetailPanelView to cover the main menu
+    // underneath while the overlay is visible.
+    static func mbBackground(_ scheme: ColorScheme) -> Color {
+        scheme == .dark
+            ? Color(red: 0.11, green: 0.11, blue: 0.12)   // ~NSColor.windowBackgroundColor dark
+            : Color(red: 0.96, green: 0.96, blue: 0.97)   // ~NSColor.windowBackgroundColor light
+    }
+
     static let mbDanger = Color(red: 1.0, green: 0.231, blue: 0.188) // #FF3B30
 }
 

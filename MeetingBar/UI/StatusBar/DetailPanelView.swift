@@ -1,7 +1,7 @@
 // DetailPanelView.swift
-// Fixed width 320. Height comes from the parent HStack (640).
-// Internal ScrollView handles overflow.
-// NO animations, NO @State for visibility, NO withAnimation.
+// Fills the full 380×640 ZStack overlay — no fixed width, no height constraint.
+// Animation is driven by the parent ZStack transition (.move + .opacity).
+// No @State for visibility, no withAnimation, no onAppear animation here.
 import SwiftUI
 import Defaults
 
@@ -11,7 +11,6 @@ struct DetailPanelView: View {
 
     @Environment(\.colorScheme) private var scheme
     @State private var showAllAttendees = false
-    @State private var appeared = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -38,16 +37,10 @@ struct DetailPanelView: View {
             }
             .scrollContentBackground(.hidden)
         }
-        .frame(width: 320)
-        // Animate only content properties (opacity + offset) — never layout.
-        // .onAppear fires after the window is already at its new size, so the
-        // main menu doesn't shake while this animation plays.
-        .opacity(appeared ? 1 : 0)
-        .offset(x: appeared ? 0 : -10)
-        .onAppear {
-            withAnimation(.easeOut(duration: 0.2)) { appeared = true }
-        }
-        .onDisappear { appeared = false }
+        // Fill the full ZStack width; use a solid background so the main menu
+        // underneath is completely hidden while the panel is visible.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(Color.mbBackground(scheme))
     }
 
     // MARK: - Header

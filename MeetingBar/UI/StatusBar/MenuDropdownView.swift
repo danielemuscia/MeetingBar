@@ -155,9 +155,9 @@ struct MenuDropdownView: View {
     // MARK: - Toggle
 
     private func toggle(_ id: String) {
-        // No withAnimation — animating the HStack layout change (window resize)
-        // causes the main menu content to shake. The detail panel animates its
-        // own content via .onAppear instead.
+        // withAnimation is safe here: the window never resizes (ZStack overlay approach),
+        // so there's no layout shake. The parent ZStack's .animation(value:) drives the
+        // transition; this call keeps selection state in sync.
         selectedEventId = (selectedEventId == id) ? nil : id
     }
 }
