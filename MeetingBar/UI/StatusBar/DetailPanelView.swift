@@ -297,7 +297,9 @@ struct DetailPanelView: View {
     // MARK: - Actions
 
     private var actionsRow: some View {
-        VStack(spacing: 1) {
+        // Negative horizontal padding cancels the section wrapper's 14 pt inset
+        // so each row's hover highlight extends flush to the section edges.
+        VStack(spacing: 0) {
             actionRow("video", "Join meeting")           { event.openMeeting() }
             actionRow("doc.on.clipboard", "Copy meeting link") {
                 if let url = event.meetingLink?.url {
@@ -312,6 +314,7 @@ struct DetailPanelView: View {
             }
             actionRow("envelope", "Email attendees") { event.emailAttendees() }
         }
+        .padding(.horizontal, -14)
     }
 
     private func actionRow(_ icon: String, _ label: String, action: @escaping () -> Void) -> some View {
@@ -332,20 +335,17 @@ private struct DetailActionRow: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 12))
+                .font(.system(size: 13))
                 .foregroundColor(Color.mbText2(scheme))
-                .frame(width: 16)
+                .frame(width: 20, alignment: .center)
             Text(label)
-                .font(.system(size: 12.5))
+                .font(.system(size: 13))
                 .foregroundColor(Color.mbText1(scheme))
             Spacer()
         }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(hovered ? Color.mbHover(scheme) : .clear)
-        )
+        .padding(.vertical, 7)
+        .padding(.horizontal, 14)   // matches section inset — text stays aligned
+        .background(hovered ? Color.mbHover(scheme) : .clear)
         .contentShape(Rectangle())
         .onHover { hovered = $0 }
         .onTapGesture { action() }
