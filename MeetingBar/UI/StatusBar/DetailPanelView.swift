@@ -136,6 +136,7 @@ struct DetailPanelView: View {
                 .font(.system(size: 13))
                 .foregroundColor(Color.mbText1(scheme))
         }
+        .padding(.vertical, 9)
     }
 
     private var statusColor: Color {
@@ -173,6 +174,7 @@ struct DetailPanelView: View {
                 .font(.system(size: 12))
                 .foregroundColor(Color.mbText2(scheme))
         }
+        .padding(.vertical, 9)
     }
 
     // MARK: - Where
@@ -211,6 +213,7 @@ struct DetailPanelView: View {
                 .clipShape(Capsule())
             }
         }
+        .padding(.vertical, 9)
     }
 
     // MARK: - Organizer
@@ -239,6 +242,7 @@ struct DetailPanelView: View {
                 }
             }
         }
+        .padding(.vertical, 9)
     }
 
     // MARK: - Attendees
