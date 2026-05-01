@@ -297,32 +297,40 @@ struct DetailPanelView: View {
     // MARK: - Actions
 
     private var actionsRow: some View {
-        // Negative horizontal padding cancels the section wrapper's 14 pt inset
-        // so each row's hover highlight extends flush to the section edges.
-        VStack(spacing: 0) {
-            actionRow("video", "Join meeting")           { event.openMeeting() }
-            actionRow("doc.on.clipboard", "Copy meeting link") {
+        // Negative padding cancels the section wrapper's 14 pt inset so rows
+        // and separators bleed flush to the section edges.
+        let items: [(icon: String, label: String, action: () -> Void)] = [
+            ("video",            "Join meeting",       { event.openMeeting() }),
+            ("doc.on.clipboard", "Copy meeting link",  {
                 if let url = event.meetingLink?.url {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(url.absoluteString, forType: .string)
                 }
-            }
-            actionRow("calendar", "Open in Calendar") {
+            }),
+            ("calendar",         "Open in Calendar",   {
                 if let url = URL(string: "ical://ekevent/\(event.id)") {
                     url.openInDefaultBrowser()
                 }
+            }),
+            ("envelope",         "Email attendees",    { event.emailAttendees() }),
+        ]
+        return VStack(spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
+                if idx > 0 {
+                    // Inset separator — leading edge aligned with the label text
+                    Rectangle()
+                        .fill(Color.mbStrokeSoft(scheme))
+                        .frame(height: 0.5)
+                        .padding(.leading, 46)   // 14 edge + 20 icon + 12 gap
+                }
+                DetailActionRow(icon: item.icon, label: item.label, action: item.action)
             }
-            actionRow("envelope", "Email attendees") { event.emailAttendees() }
         }
         .padding(.horizontal, -14)
     }
-
-    private func actionRow(_ icon: String, _ label: String, action: @escaping () -> Void) -> some View {
-        DetailActionRow(icon: icon, label: label, action: action)
-    }
 }
 
-// MARK: - Hoverable action row
+// MARK: - Native-style action row
 
 private struct DetailActionRow: View {
     let icon: String
@@ -333,18 +341,19 @@ private struct DetailActionRow: View {
     @State private var hovered = false
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 13))
-                .foregroundColor(Color.mbText2(scheme))
+                .font(.system(size: 14))
+                .foregroundColor(Color.mbText1(scheme))
                 .frame(width: 20, alignment: .center)
             Text(label)
                 .font(.system(size: 13))
                 .foregroundColor(Color.mbText1(scheme))
             Spacer()
         }
-        .padding(.vertical, 7)
-        .padding(.horizontal, 14)   // matches section inset — text stays aligned
+        .padding(.vertical, 9)
+        .padding(.horizontal, 14)
+        .frame(maxWidth: .infinity)
         .background(hovered ? Color.mbHover(scheme) : .clear)
         .contentShape(Rectangle())
         .onHover { hovered = $0 }
