@@ -12,21 +12,27 @@ struct MenuPanelView: View {
     var body: some View {
         ZStack(alignment: .topLeading) {
             // Main menu — always rendered at full size, never moves.
-            ScrollView {
-                MenuDropdownView(
-                    events:          viewModel.events,
-                    density:         viewModel.density,
-                    showNotes:       viewModel.showNotes,
-                    selectedEventId: $viewModel.selectedEventId,
-                    onJoinNext:      { viewModel.joinNextMeeting() },
-                    onCreateMeeting: { viewModel.createMeeting() },
-                    onPreferences:   { viewModel.openPreferences() },
-                    onQuit:          { NSApp.terminate(nil) },
-                    onReload:        { viewModel.reload() }
-                )
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        Color.clear.frame(height: 0).id("top")
+                        MenuDropdownView(
+                            events:          viewModel.events,
+                            density:         viewModel.density,
+                            showNotes:       viewModel.showNotes,
+                            selectedEventId: $viewModel.selectedEventId,
+                            onJoinNext:      { viewModel.joinNextMeeting() },
+                            onCreateMeeting: { viewModel.createMeeting() },
+                            onPreferences:   { viewModel.openPreferences() },
+                            onQuit:          { NSApp.terminate(nil) },
+                            onReload:        { viewModel.reload() }
+                        )
+                    }
+                }
+                .frame(width: 380)
+                .scrollContentBackground(.hidden)
+                .onAppear { proxy.scrollTo("top", anchor: .top) }
             }
-            .frame(width: 380)
-            .scrollContentBackground(.hidden)
 
             // Detail panel — overlays the main menu; slides in/out from the left.
             if let event = viewModel.selectedEvent {
