@@ -16,26 +16,30 @@ struct DetailPanelView: View {
         VStack(spacing: 0) {
             header
             Divider()
-            ScrollView {
-                VStack(spacing: 0) {
-                    section("Status")  { statusRow }
-                    section("When")    { whenRow }
-                    if event.location != nil || event.meetingLink != nil {
-                        section("Where") { whereRow }
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        Color.clear.frame(height: 0).id("top")
+                        section("Status")  { statusRow }
+                        section("When")    { whenRow }
+                        if event.location != nil || event.meetingLink != nil {
+                            section("Where") { whereRow }
+                        }
+                        if let org = event.organizer {
+                            section("Organizer") { organizerRow(org) }
+                        }
+                        if !event.attendees.isEmpty {
+                            section("Attendees") { attendeesRow }
+                        }
+                        if let notes = event.notes, !notes.isEmpty {
+                            section("Notes") { notesRow(notes) }
+                        }
+                        section("Actions") { actionsRow }
                     }
-                    if let org = event.organizer {
-                        section("Organizer") { organizerRow(org) }
-                    }
-                    if !event.attendees.isEmpty {
-                        section("Attendees") { attendeesRow }
-                    }
-                    if let notes = event.notes, !notes.isEmpty {
-                        section("Notes") { notesRow(notes) }
-                    }
-                    section("Actions") { actionsRow }
                 }
+                .scrollContentBackground(.hidden)
+                .onAppear { proxy.scrollTo("top", anchor: .top) }
             }
-            .scrollContentBackground(.hidden)
         }
         // Fill the full ZStack width; use a solid background so the main menu
         // underneath is completely hidden while the panel is visible.
@@ -240,11 +244,15 @@ struct DetailPanelView: View {
                         Link(display, destination: url)
                             .font(.system(size: 11.5))
                             .foregroundColor(Color.accentColor)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     } else {
                         Text(display)
                             .font(.system(size: 11.5))
                             .foregroundColor(Color.mbText2(scheme))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
